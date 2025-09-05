@@ -21,7 +21,7 @@ export const register = async (req: Request, res: Response) => {
   });
 
   if (emailExists) {
-    res.status(400).json({ message: "Email sudah digunakkan" });
+    return res.status(400).json({ message: "Email sudah digunakkan" });
   }
 
   try {
