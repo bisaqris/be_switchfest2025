@@ -91,7 +91,9 @@ export const login = async (req: Request, res: Response) => {
       throw new Error("JWT_SECRET tidak diatur di file .env");
     }
 
-    const token = jwt.sign({ userId: user.id }, jwtSecret, { expiresIn: "1h" });
+    const token = jwt.sign({ userId: user.id, role: user.role }, jwtSecret, {
+      expiresIn: "1h",
+    });
 
     res.status(200).json({
       message: "Login Berhasil",
@@ -99,6 +101,7 @@ export const login = async (req: Request, res: Response) => {
         id: user.id,
         email: user.email,
         name: user.name,
+        role: user.role,
       },
       token,
     });
