@@ -8,7 +8,7 @@ import { checkAuth } from "./middlewares/authMiddleware.js";
 const app: Express = express();
 
 app.get("/", (req: Request, res: Response) => {
-  res.send("Server TypeScript berjalan!");
+  res.send("Server BackEnd berjalan!");
 });
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -17,6 +17,6 @@ app.use("/auth", authRoutes);
 app.use(checkAuth);
 app.use("/users", userRoutes);
 
-app.listen(3000, () => {
-  console.log("Server berjalan di http://localhost:3000");
+app.listen(8000, () => {
+  console.log("Server berjalan di http://localhost:8000");
 });
