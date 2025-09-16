@@ -8,6 +8,7 @@ export const getUsers = async (req: Request, res: Response) => {
       id: true,
       email: true,
       name: true,
+      role: true,
     },
   });
 
@@ -39,7 +40,7 @@ export const getUser = async (req: Request, res: Response) => {
 };
 
 export const createUser = async (req: Request, res: Response) => {
-  const { email, name, password } = req.body;
+  const { email, name, password, role } = req.body;
 
   const fields: { [key: string]: string } = { email, name, password };
 
@@ -66,6 +67,7 @@ export const createUser = async (req: Request, res: Response) => {
         email,
         name,
         password: hashedPassword,
+        role,
       },
     });
 
@@ -104,7 +106,7 @@ export const updateUser = async (req: Request, res: Response) => {
 
   const updateData: { [key: string]: any } = {};
 
-  const fieldsMap = ["email", "name"];
+  const fieldsMap = ["email", "name", "role"];
 
   for (let key of fieldsMap) {
     if (req.body[key] !== undefined) {
