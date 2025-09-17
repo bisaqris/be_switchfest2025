@@ -15,7 +15,24 @@ datasource db {
 
 enum Role {
   admin
+  hr
   user
+}
+
+enum JobType {
+  FullTime
+  PartTime
+  Contract
+  Internship
+}
+
+enum CandidateStatus {
+  Applied
+  Reviewed
+  Interviewing
+  Offered
+  Hired
+  Rejected
 }
 
 model User {
@@ -24,7 +41,87 @@ model User {
   name String
   password String
   role Role @default(user)
+  companyId String?     @db.ObjectId
+  company   Company?    @relation("CompanyHR", fields: [companyId], references: [id])
+
+  applications Kandidat[]
+
+  enrolledCourses   Kursus[] @relation("UserCourses", fields: [enrolledCourseIds], references: [id])
+  enrolledCourseIds String[] @db.ObjectId
+
+  communities   Community[] @relation("UserCommunities", fields: [communityIds], references: [id])
+  communityIds  String[]    @db.ObjectId
   createAt DateTime @default(now())
   updateAt DateTime @updatedAt
 }
 
+model Kursus {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  instructor  String
+  duration Int
+
+  enrolledUsers   User[]   @relation("UserCourses", fields: [enrolledUserIds], references: [id])
+  enrolledUserIds String[] @db.ObjectId
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Community {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  name          String   @unique
+  description   String
+  coverImageUrl String?
+  members   User[]     @relation("UserCommunities", fields: [memberIds], references: [id])
+  memberIds String[]   @db.ObjectId
+  createdAt DateTime @default(now())
+  updateAt DateTime @default(now())
+}
+
+model Company {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  description String
+  website     String?
+  location    String
+  logoUrl     String?
+  hrUsers     User[]     @relation("CompanyHR")
+  jobPostings Lowongan[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Lowongan {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  title         String
+  description   String
+  location      String
+  jobType       JobType
+  salaryRange   String?
+
+  companyId String   @db.ObjectId
+  company   Company  @relation(fields: [companyId], references: [id])
+
+  candidates  Kandidat[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Kandidat {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  status  CandidateStatus @default(Applied)
+  userId String @db.ObjectId
+  user User   @relation(fields: [userId], references: [id])
+  jobId String   @db.ObjectId
+  job Lowongan @relation(fields: [jobId], references: [id])
+  
+  resumeUrl   String
+  coverLetter String?
+  appliedAt DateTime @default(now())
+  
+  @@unique([userId, jobId])
+}
