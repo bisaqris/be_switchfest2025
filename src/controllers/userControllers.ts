@@ -188,8 +188,44 @@ export const deleteUser = async (req: Request, res: Response) => {
   });
 };
 
+export const getCompany = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).json({ message: "parameter ID dibutuhkan" });
+  }
+
+  try {
+    const kandidat = await prisma.user.findUnique({
+      where: {
+        id,
+      },
+      include: {
+        company: true,
+      },
+    });
+
+    if (!kandidat) {
+      return res
+        .status(404)
+        .json({ message: "kandidat tidak ditemukan pada user" });
+    }
+
+    res.status(200).json({ status: 200, data: kandidat });
+  } catch (e) {
+    console.log(e);
+    res
+      .status(500)
+      .json({ message: "Terjadi kesalahan pada server", error: e });
+  }
+};
+
 export const getKandidat = async (req: Request, res: Response) => {
-  const { id } = req.body;
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).json({ message: "parameter ID dibutuhkan" });
+  }
 
   try {
     const kandidat = await prisma.user.findUnique({
@@ -209,12 +245,19 @@ export const getKandidat = async (req: Request, res: Response) => {
 
     res.status(200).json({ status: 200, data: kandidat });
   } catch (e) {
-    res.status(500).json({ message: "Terjadi kesalahan pada server" });
+    console.log(e);
+    res
+      .status(500)
+      .json({ message: "Terjadi kesalahan pada server", error: e });
   }
 };
 
 export const getKursus = async (req: Request, res: Response) => {
-  const { id } = req.body;
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).json({ message: "parameter ID dibutuhkan" });
+  }
 
   try {
     const kursus = await prisma.user.findUnique({
@@ -233,6 +276,39 @@ export const getKursus = async (req: Request, res: Response) => {
     }
 
     res.status(200).json({ status: 200, data: kursus });
+  } catch (e) {
+    res.status(500).json({
+      status: 500,
+      message: "Terjadi kesalahan pada server",
+      error: e,
+    });
+  }
+};
+
+export const getCommunity = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).json({ message: "parameter ID dibutuhkan" });
+  }
+
+  try {
+    const community = await prisma.user.findUnique({
+      where: {
+        id,
+      },
+      include: {
+        communities: true,
+      },
+    });
+
+    if (!community) {
+      return res
+        .status(404)
+        .json({ status: 404, message: "Community tidak ditemukan pada user" });
+    }
+
+    res.status(200).json({ status: 200, message: community });
   } catch (e) {
     res.status(500).json({
       status: 500,

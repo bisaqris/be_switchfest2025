@@ -3,6 +3,10 @@ import { Router } from "express";
 import {
   createUser,
   deleteUser,
+  getCommunity,
+  getCompany,
+  getKandidat,
+  getKursus,
   getUser,
   getUsers,
   updateUser,
@@ -49,5 +53,10 @@ router.get("/:id", getUser);
 router.post("/", limiter, checkRole(["admin"]), createUser);
 router.patch("/:id", limiter, checkRole(["admin"]), updateUser);
 router.delete("/:id", checkRole(["admin"]), deleteUser);
+
+router.get("/:id/kandidat", getKandidat);
+router.get("/:id/company", getCompany);
+router.get("/:id/kursus", getKursus);
+router.get("/:id/community", getCommunity);
 
 export default router;
