@@ -187,3 +187,57 @@ export const deleteUser = async (req: Request, res: Response) => {
     data: deletedUser,
   });
 };
+
+export const getKandidat = async (req: Request, res: Response) => {
+  const { id } = req.body;
+
+  try {
+    const kandidat = await prisma.user.findUnique({
+      where: {
+        id,
+      },
+      include: {
+        applications: true,
+      },
+    });
+
+    if (!kandidat) {
+      return res
+        .status(404)
+        .json({ message: "kandidat tidak ditemukan pada user" });
+    }
+
+    res.status(200).json({ status: 200, data: kandidat });
+  } catch (e) {
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
+  }
+};
+
+export const getKursus = async (req: Request, res: Response) => {
+  const { id } = req.body;
+
+  try {
+    const kursus = await prisma.user.findUnique({
+      where: {
+        id,
+      },
+      include: {
+        enrolledCourses: true,
+      },
+    });
+
+    if (!kursus) {
+      return res
+        .status(404)
+        .json({ status: 404, message: "kursus tidak ditemukan pada user" });
+    }
+
+    res.status(200).json({ status: 200, data: kursus });
+  } catch (e) {
+    res.status(500).json({
+      status: 500,
+      message: "Terjadi kesalahan pada server",
+      error: e,
+    });
+  }
+};
