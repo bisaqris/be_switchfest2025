@@ -42,7 +42,7 @@ export const getUser = async (req: Request, res: Response) => {
 export const createUser = async (req: Request, res: Response) => {
   const { email, name, password, role } = req.body;
 
-  const fields: { [key: string]: string } = { email, name, password };
+  const fields: { [key: string]: string } = { email, name, password, role };
 
   for (let field in fields) {
     if (!fields[field]) {
@@ -88,71 +88,51 @@ export const createUser = async (req: Request, res: Response) => {
 
 export const updateUser = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { email } = req.body;
+  const { name, email, password, role, companyId } = req.body;
 
   if (!id) {
-    return res.status(400).json({ message: "Parameter Id dibutuhkan" });
-  }
-
-  const emailExists = await prisma.user.findUnique({
-    where: {
-      email,
-    },
-  });
-
-  if (emailExists) {
-    return res.status(400).json({ message: "Email sudah digunakan" });
+    return res.status(400).json({ message: "Parameter ID user dibutuhkan" });
   }
 
   const updateData: { [key: string]: any } = {};
-
-  const fieldsMap = ["email", "name", "role"];
-
-  for (let key of fieldsMap) {
-    if (req.body[key] !== undefined) {
-      updateData[key] = req.body[key] || null;
-    }
-  }
-
-  const user = await prisma.user.findUnique({
-    where: {
-      id,
-    },
-  });
-
-  if (!user) {
-    return res
-      .status(404)
-      .json({ message: `User dengan id ${id} tidak ditemukan.` });
-  }
+  if (name !== undefined) updateData.name = name;
+  if (role !== undefined) updateData.role = role;
+  if (companyId !== undefined) updateData.companyId = companyId;
 
   if (email) {
-    const userExists = await prisma.user.findUnique({
-      where: {
-        email,
-      },
+    const userWithSameEmail = await prisma.user.findUnique({
+      where: { email },
     });
-
-    if (userExists && userExists.email !== email) {
-      return res.status(400).json({ message: "Email already exists" });
+    if (userWithSameEmail && userWithSameEmail.id !== id) {
+      return res
+        .status(400)
+        .json({ message: "Email sudah digunakan oleh user lain." });
     }
+    updateData.email = email;
+  }
+
+  if (password) {
+    if (password.length < 8) {
+      return res.status(400).json({ message: "Password minimal 8 karakter." });
+    }
+    updateData.password = await argon2.hash(password);
   }
 
   if (Object.keys(updateData).length === 0) {
-    return res.status(400).json({ message: "Tidak ada data yang dikirim" });
+    return res
+      .status(400)
+      .json({ message: "Tidak ada data yang dikirim untuk di-update." });
   }
 
   try {
     const updatedUser = await prisma.user.update({
-      where: {
-        id,
-      },
+      where: { id },
       data: updateData,
     });
     res.status(200).json({ status: 200, data: updatedUser });
   } catch (e) {
     console.error(e);
-    res.status(500).json({ message: "Gagal update user", error: e });
+    res.status(404).json({ message: `User dengan ID ${id} tidak ditemukan.` });
   }
 };
 

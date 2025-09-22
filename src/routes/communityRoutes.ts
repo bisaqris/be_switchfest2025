@@ -1,20 +1,18 @@
 import express from "express";
 import { Router } from "express";
 import {
-  createUser,
-  deleteUser,
+  createCommunity,
+  deletecommunity,
+  getCommunities,
   getCommunity,
-  getCompany,
-  getKandidat,
-  getKursus,
-  getUser,
-  getUsers,
-  updateUser,
-} from "../controllers/userControllers.js";
+  updateCommunity,
+} from "../controllers/communityController.js";
+import { checkAuth } from "../middlewares/authMiddleware.js";
 import rateLimit from "express-rate-limit";
 import jwt, { JwtPayload, Secret } from "jsonwebtoken";
 import { checkRole } from "../middlewares/checkRole.js";
- 
+import uploadWithLogging from "../middlewares/uploadMiddleware.js";
+
 const limiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 60,
@@ -48,15 +46,22 @@ const limiter = rateLimit({
 
 const router: Router = express.Router();
 
-router.get("/", getUsers);
-router.get("/:id", getUser);
-router.post("/", limiter, checkRole(["admin"]), createUser);
-router.patch("/:id", limiter, checkRole(["admin"]), updateUser);
-router.delete("/:id", checkRole(["admin"]), deleteUser);
-
-router.get("/:id/kandidat", getKandidat);
-router.get("/:id/company", getCompany);
-router.get("/:id/kursus", getKursus);
-router.get("/:id/community", getCommunity);
+router.get("/", getCommunities);
+router.get("/:id", getCommunity);
+router.post(
+  "/",
+  limiter,
+  checkAuth,
+  checkRole(["admin"]),
+  uploadWithLogging("coverImageUrl"),
+  createCommunity
+);
+router.patch(
+  "/:id",
+  checkAuth,
+  uploadWithLogging("coverImageUrl"),
+  updateCommunity
+);
+router.delete("/:id", checkAuth, checkRole(["admin"]), deletecommunity);
 
 export default router;
