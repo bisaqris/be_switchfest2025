@@ -1,17 +1,12 @@
 import express from "express";
 import { Router } from "express";
-import {
-  createCommunity,
-  deletecommunity,
-  getCommunities,
-  getCommunity,
-  updateCommunity,
-} from "../controllers/communityController.js";
 import { checkAuth } from "../middlewares/authMiddleware.js";
 import rateLimit from "express-rate-limit";
 import jwt, { JwtPayload, Secret } from "jsonwebtoken";
 import { checkRole } from "../middlewares/checkRole.js";
 import uploadWithLogging from "../middlewares/uploadMiddleware.js";
+import { createCompany, deleteCompany, getCompanies, updateCompany } from "../controllers/companyController.js";
+import { getCompany } from "../controllers/userControllers.js";
 
 const limiter = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -46,23 +41,23 @@ const limiter = rateLimit({
 
 const router: Router = express.Router();
 
-router.get("/", getCommunities);
-router.get("/:id", getCommunity);
+router.get("/", getCompanies);
+router.get("/:id", getCompany);
 router.post(
   "/",
   limiter,
   checkAuth,
   checkRole(["admin", "role"]),
-  uploadWithLogging("coverImageUrl"),
-  createCommunity
+  uploadWithLogging("logoUrl"),
+  createCompany
 );
 router.patch(
   "/:id",
   checkAuth,
   checkRole(["admin", "role"]),
-  uploadWithLogging("coverImageUrl"),
-  updateCommunity
+  uploadWithLogging("logoUrl"),
+  updateCompany
 );
-router.delete("/:id", checkAuth, checkRole(["admin", "role"]), deletecommunity);
+router.delete("/:id", checkAuth, checkRole(["admin", "role"]), deleteCompany);
 
 export default router;
