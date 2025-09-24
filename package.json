@@ -7,6 +7,7 @@
     "build": "prisma generate && tsc",
     "start": "node ./dist/server.js",
     "push": "prisma generate && npx prisma db push",
+    "push-force": "npx prisma generate && npx prisma db push --force-reset",
     "dev": "tsx watch ./src/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

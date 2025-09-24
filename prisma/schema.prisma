@@ -121,7 +121,6 @@ model Kandidat {
   job Lowongan @relation(fields: [jobId], references: [id])
   
   resumeUrl   String
-  coverLetter String?
   appliedAt DateTime @default(now())
   
   @@unique([userId, jobId])

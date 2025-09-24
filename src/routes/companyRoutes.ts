@@ -5,8 +5,13 @@ import rateLimit from "express-rate-limit";
 import jwt, { JwtPayload, Secret } from "jsonwebtoken";
 import { checkRole } from "../middlewares/checkRole.js";
 import uploadWithLogging from "../middlewares/uploadMiddleware.js";
-import { createCompany, deleteCompany, getCompanies, updateCompany } from "../controllers/companyController.js";
-import { getCompany } from "../controllers/userControllers.js";
+import {
+  createCompany,
+  deleteCompany,
+  getCompanies,
+  getCompany,
+  updateCompany,
+} from "../controllers/companyController.js";
 
 const limiter = rateLimit({
   windowMs: 60 * 60 * 1000,

@@ -1,4 +1,4 @@
-import multer from 'multer';
+import multer from "multer";
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -12,7 +12,10 @@ const uploadWithLogging = (fieldName: string) => {
         console.error("Middleware Upload: Error dari multer:", err);
         return next(err);
       }
-      console.log("Middleware Upload: Selesai. req.file adalah:", req.file ? "DITEMUKAN" : "TIDAK DITEMUKAN (null)");
+      console.log(
+        "Middleware Upload: Selesai. req.file adalah:",
+        req.file ? "DITEMUKAN" : "TIDAK DITEMUKAN (null)"
+      );
       next();
     });
   };

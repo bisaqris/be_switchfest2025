@@ -51,13 +51,13 @@ export const createCompany = async (req: Request, res: Response) => {
       .json({ message: "Nama, description, location wajib diisi." });
   }
 
-  const community = await prisma.community.findUnique({
+  const company = await prisma.company.findUnique({
     where: {
       name,
     },
   });
 
-  if (community) {
+  if (company) {
     return res.status(400).json({ message: "Nama sudah digunakan" });
   }
 
@@ -114,10 +114,10 @@ export const updateCompany = async (req: Request, res: Response) => {
   }
 
   try {
-    const existingCommunity = await prisma.company.findUnique({
+    const existingCompany = await prisma.company.findUnique({
       where: { id },
     });
-    if (!existingCommunity) {
+    if (!existingCompany) {
       return res.status(404).json({ message: "Komunitas tidak ditemukan." });
     }
 
@@ -126,8 +126,8 @@ export const updateCompany = async (req: Request, res: Response) => {
     if (description) updateData.description = description;
 
     if (req.file) {
-      if (existingCommunity.logoUrl) {
-        const publicId = existingCommunity.logoUrl
+      if (existingCompany.logoUrl) {
+        const publicId = existingCompany.logoUrl
           .split("/")
           .pop()
           ?.split(".")[0];
@@ -143,14 +143,14 @@ export const updateCompany = async (req: Request, res: Response) => {
       updateData.logoUrl = uploadResult.secure_url;
     }
 
-    const updatedCommunity = await prisma.community.update({
+    const updatedCompany = await prisma.company.update({
       where: { id },
       data: updateData,
     });
 
     res.status(200).json({
       message: "Komunitas berhasil diperbarui",
-      data: updatedCommunity,
+      data: updatedCompany,
     });
   } catch (e) {
     console.log(e);

@@ -40,7 +40,7 @@ export const getUser = async (req: Request, res: Response) => {
 };
 
 export const createUser = async (req: Request, res: Response) => {
-  const { email, name, password, role } = req.body;
+  const { email, name, password, role, companyId } = req.body;
 
   const fields: { [key: string]: string } = { email, name, password, role };
 
@@ -68,6 +68,7 @@ export const createUser = async (req: Request, res: Response) => {
         name,
         password: hashedPassword,
         role,
+        companyId,
       },
     });
 
@@ -95,6 +96,7 @@ export const updateUser = async (req: Request, res: Response) => {
   }
 
   const updateData: { [key: string]: any } = {};
+
   if (name !== undefined) updateData.name = name;
   if (role !== undefined) updateData.role = role;
   if (companyId !== undefined) updateData.companyId = companyId;
@@ -106,22 +108,19 @@ export const updateUser = async (req: Request, res: Response) => {
     if (userWithSameEmail && userWithSameEmail.id !== id) {
       return res
         .status(400)
-        .json({ message: "Email sudah digunakan oleh user lain." });
+        .json({ message: "Email sudah digunakan oleh pengguna lain." });
     }
     updateData.email = email;
   }
 
   if (password) {
-    if (password.length < 8) {
-      return res.status(400).json({ message: "Password minimal 8 karakter." });
-    }
     updateData.password = await argon2.hash(password);
   }
 
   if (Object.keys(updateData).length === 0) {
     return res
       .status(400)
-      .json({ message: "Tidak ada data yang dikirim untuk di-update." });
+      .json({ message: "Tidak ada data yang valid untuk di-update." });
   }
 
   try {
