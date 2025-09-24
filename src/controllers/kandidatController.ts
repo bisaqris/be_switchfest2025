@@ -10,11 +10,13 @@ const bufferToDataURI = (buffer: Buffer, mimeType: string) =>
 
 export const applyForJob = async (req: Request, res: Response) => {
   const { jobId } = req.params;
-  const { coverLetter } = req.body;
+  const { resumeUrl } = req.body;
   const userId = req.user.userId;
 
   if (!jobId) {
-    return res.status(400).json({ message: "Parameter ID lowongan dibutuhkan." });
+    return res
+      .status(400)
+      .json({ message: "Parameter ID lowongan dibutuhkan." });
   }
 
   if (!req.file) {
@@ -27,23 +29,33 @@ export const applyForJob = async (req: Request, res: Response) => {
     });
 
     if (existingApplication) {
-      return res.status(400).json({ message: "Anda sudah pernah melamar lowongan ini." });
+      return res
+        .status(400)
+        .json({ message: "Anda sudah pernah melamar lowongan ini." });
     }
 
     const fileUri = bufferToDataURI(req.file.buffer, req.file.mimetype);
-    const uploadResult = await cloudinary.uploader.upload(fileUri, { folder: 'resumes' });
+    const uploadResult = await cloudinary.uploader.upload(fileUri, {
+      folder: "resumes",
+    });
     const resumeUrl = uploadResult.secure_url;
+
+    if (!resumeUrl) {
+      return res.status(500).json({ message: "Gagal mengunggah resume." });
+    }
 
     const newKandidat = await prisma.kandidat.create({
       data: {
         resumeUrl,
-        status: 'Applied',
+        status: "Applied",
         user: { connect: { id: userId } },
         job: { connect: { id: jobId } },
       },
     });
 
-    res.status(201).json({ message: "Lamaran berhasil dikirim", data: newKandidat });
+    res
+      .status(201)
+      .json({ message: "Lamaran berhasil dikirim", data: newKandidat });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Terjadi kesalahan pada server." });
