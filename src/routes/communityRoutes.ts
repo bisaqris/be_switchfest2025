@@ -52,17 +52,17 @@ router.post(
   "/",
   limiter,
   checkAuth,
-  checkRole(["admin", "role"]),
+  checkRole(["admin", "hr"]),
   uploadWithLogging("coverImageUrl"),
   createCommunity
 );
 router.patch(
   "/:id",
   checkAuth,
-  checkRole(["admin", "role"]),
+  checkRole(["admin", "hr"]),
   uploadWithLogging("coverImageUrl"),
   updateCommunity
 );
-router.delete("/:id", checkAuth, checkRole(["admin", "role"]), deletecommunity);
+router.delete("/:id", checkAuth, checkRole(["admin", "hr"]), deletecommunity);
 
 export default router;

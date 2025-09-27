@@ -9,6 +9,7 @@ export const getCompanies = async (req: Request, res: Response) => {
         select: { hrUsers: true, jobPostings: true },
       },
     },
+    
   });
 
   return res
@@ -124,6 +125,8 @@ export const updateCompany = async (req: Request, res: Response) => {
     const updateData: { [key: string]: any } = {};
     if (name) updateData.name = name;
     if (description) updateData.description = description;
+    if (website) updateData.website = website;
+    if (location) updateData.location = location;
 
     if (req.file) {
       if (existingCompany.logoUrl) {

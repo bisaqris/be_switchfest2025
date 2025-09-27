@@ -4,6 +4,11 @@ import { prisma } from "../config/prisma.js";
 export const getLowongans = async (req: Request, res: Response) => {
   const lowongan = await prisma.lowongan.findMany({
     include: {
+      company: {
+        select: {
+          name: true,
+        },
+      },
       _count: {
         select: { candidates: true },
       },
@@ -126,11 +131,9 @@ export const updateLowongan = async (req: Request, res: Response) => {
     });
 
     if (hrUser?.companyId !== existingLowongan.companyId) {
-      return res
-        .status(403)
-        .json({
-          message: "Akses ditolak: Anda tidak berhak mengedit lowongan ini.",
-        });
+      return res.status(403).json({
+        message: "Akses ditolak: Anda tidak berhak mengedit lowongan ini.",
+      });
     }
 
     const updateData: { [key: string]: any } = {};

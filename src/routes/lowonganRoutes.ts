@@ -10,6 +10,8 @@ import {
   getLowongans,
   updateLowongan,
 } from "../controllers/lowonganController.js";
+import uploadWithLogging from "../middlewares/uploadMiddleware.js";
+import { applyForJob, getCandidatesForJob } from "../controllers/kandidatController.js";
 
 const limiter = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -55,5 +57,19 @@ router.post(
 );
 router.patch("/:id", checkAuth, checkRole(["admin", "hr"]), updateLowongan);
 router.delete("/:id", checkAuth, checkRole(["admin", "hr"]), deletelowongan);
+
+router.post(
+  "/:jobId/apply",
+  checkAuth,
+  uploadWithLogging("resumeUrl"),
+  applyForJob
+);
+
+router.get(
+  "/:jobId/candidates",
+  checkAuth,
+  checkRole(["admin", "hr"]),
+  getCandidatesForJob
+);
 
 export default router;
