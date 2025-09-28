@@ -106,24 +106,20 @@ export const createlowongan = async (req: Request, res: Response) => {
 
 export const updateLowongan = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { title, description, location, jobType, salaryRange } = req.body;
   const loggedInUserId = req.user.userId;
 
-  if (!id) {
+  if (!id || typeof id !== "string") {
     return res
       .status(400)
-      .json({ message: "Parameter ID lowongan dibutuhkan" });
+      .json({ message: "Parameter ID lowongan yang valid dibutuhkan." });
   }
 
   try {
     const existingLowongan = await prisma.lowongan.findUnique({
       where: { id },
     });
-
     if (!existingLowongan) {
-      return res
-        .status(404)
-        .json({ message: `Lowongan dengan ID ${id} tidak ditemukan.` });
+      return res.status(404).json({ message: `Lowongan tidak ditemukan.` });
     }
 
     const hrUser = await prisma.user.findUnique({
@@ -131,58 +127,52 @@ export const updateLowongan = async (req: Request, res: Response) => {
     });
 
     if (hrUser?.companyId !== existingLowongan.companyId) {
-      return res.status(403).json({
-        message: "Akses ditolak: Anda tidak berhak mengedit lowongan ini.",
-      });
+      return res.status(403).json({ message: "Akses ditolak." });
     }
-
-    const updateData: { [key: string]: any } = {};
-    if (title) updateData.title = title;
-    if (description) updateData.description = description;
-    if (location) updateData.location = location;
-    if (jobType) updateData.jobType = jobType;
-    if (salaryRange) updateData.salaryRange = salaryRange;
 
     const updatedLowongan = await prisma.lowongan.update({
       where: { id },
-      data: updateData,
+      data: req.body,
     });
 
     res.status(200).json({ status: 200, data: updatedLowongan });
   } catch (e) {
-    console.error(e);
-    res.status(500).json({ message: "Gagal meng-update lowongan", error: e });
+    res.status(500).json({ message: "Gagal meng-update lowongan" });
   }
 };
 
 export const deletelowongan = async (req: Request, res: Response) => {
   const { id } = req.params;
-
-  if (!id) {
-    return res.status(400).json({ message: "Parameter ID dibutuhkan" });
-  }
-
-  const lowongan = await prisma.lowongan.findUnique({
-    where: {
-      id,
-    },
-  });
-
-  if (!lowongan) {
+  const loggedInUserId = req.user.userId;
+  if (!id || typeof id !== "string") {
     return res
       .status(400)
-      .json({ message: `Lowongan dengan id ${id} tidak ditemukan` });
+      .json({ message: "Parameter ID lowongan yang valid dibutuhkan." });
   }
+  try {
+    const existingLowongan = await prisma.lowongan.findUnique({
+      where: { id },
+    });
+    if (!existingLowongan) {
+      return res.status(404).json({ message: `Lowongan tidak ditemukan` });
+    }
 
-  const deletedlowongan = await prisma.lowongan.delete({
-    where: {
-      id,
-    },
-  });
+    const hrUser = await prisma.user.findUnique({
+      where: { id: loggedInUserId },
+    });
 
-  res.status(200).json({
-    status: 200,
-    message: "Berhasil Menghapus lowongan",
-    data: deletedlowongan,
-  });
+    if (hrUser?.companyId !== existingLowongan.companyId) {
+      return res.status(403).json({ message: "Akses ditolak." });
+    }
+
+    await prisma.kandidat.deleteMany({ where: { jobId: id } });
+
+    const deletedlowongan = await prisma.lowongan.delete({ where: { id } });
+
+    res
+      .status(200)
+      .json({ message: "Berhasil Menghapus lowongan", data: deletedlowongan });
+  } catch (e) {
+    res.status(500).json({ message: "Gagal menghapus lowongan" });
+  }
 };

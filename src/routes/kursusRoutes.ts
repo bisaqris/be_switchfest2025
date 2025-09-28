@@ -6,22 +6,15 @@ import {
   updateKursus,
   deleteKursus,
 } from "../controllers/kursusController.js";
+import { checkAuth } from "../middlewares/authMiddleware.js";
+import { checkRole } from "../middlewares/checkRole.js";
 
 const router = Router();
 
-// Ambil semua kursus
 router.get("/", getKursuses);
-
-// Ambil kursus berdasarkan ID
 router.get("/:id", getKursus);
-
-// Buat kursus baru
-router.post("/", createKursus);
-
-// Update kursus berdasarkan ID
-router.patch("/:id", updateKursus);
-
-// Hapus kursus berdasarkan ID
-router.delete("/:id", deleteKursus);
+router.post("/", checkAuth, checkRole(["admin", "hr"]), createKursus);
+router.patch("/:id", checkAuth, checkRole(["admin", "hr"]), updateKursus);
+router.delete("/:id", checkAuth, checkRole(["admin", "hr"]), deleteKursus);
 
 export default router;

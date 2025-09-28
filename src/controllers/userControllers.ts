@@ -9,6 +9,7 @@ export const getUsers = async (req: Request, res: Response) => {
       email: true,
       name: true,
       role: true,
+      companyId: true,
     },
   });
 

@@ -66,13 +66,28 @@ export const getCandidatesForJob = async (req: Request, res: Response) => {
   const { jobId } = req.params;
   const hrUserId = req.user.userId;
 
-  if (!jobId) {
+  if (!jobId || typeof jobId !== "string") {
     return res
       .status(400)
-      .json({ message: "Parameter ID lowongan dibutuhkan." });
+      .json({ message: "Parameter ID lowongan yang valid dibutuhkan." });
   }
 
   try {
+    const lowongan = await prisma.lowongan.findUnique({ where: { id: jobId } });
+    if (!lowongan) {
+      return res.status(404).json({ message: "Lowongan tidak ditemukan." });
+    }
+
+    const hrUser = await prisma.user.findUnique({ where: { id: hrUserId } });
+
+    if (lowongan.companyId !== hrUser?.companyId) {
+      console.log(lowongan.companyId, hrUser?.companyId);
+      return res.status(403).json({
+        message:
+          "Akses ditolak: Anda tidak berhak melihat kandidat untuk lowongan ini.",
+      });
+    }
+
     const candidates = await prisma.kandidat.findMany({
       where: { jobId },
       include: { user: { select: { id: true, name: true, email: true } } },
@@ -110,13 +125,27 @@ export const updateCandidateStatus = async (req: Request, res: Response) => {
   const { status } = req.body;
   const hrUserId = req.user.userId;
 
-  if (!id) {
+  if (!id || typeof id !== "string") {
     return res
       .status(400)
-      .json({ message: "Parameter ID kandidat dibutuhkan." });
+      .json({ message: "Parameter ID lowongan yang valid dibutuhkan." });
   }
-
   try {
+    const kandidat = await prisma.kandidat.findUnique({
+      where: { id },
+      include: { job: true },
+    });
+
+    if (!kandidat) {
+      return res.status(404).json({ message: "Data lamaran tidak ditemukan." });
+    }
+
+    const hrUser = await prisma.user.findUnique({ where: { id: hrUserId } });
+
+    if (kandidat.job.companyId !== hrUser?.companyId) {
+      return res.status(403).json({ message: "Akses ditolak." });
+    }
+
     const updatedKandidat = await prisma.kandidat.update({
       where: { id },
       data: { status },

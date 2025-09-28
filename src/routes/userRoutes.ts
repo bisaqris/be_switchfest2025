@@ -14,7 +14,7 @@ import {
 import rateLimit from "express-rate-limit";
 import jwt, { JwtPayload, Secret } from "jsonwebtoken";
 import { checkRole } from "../middlewares/checkRole.js";
- 
+
 const limiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 60,
@@ -52,7 +52,7 @@ router.get("/", getUsers);
 router.get("/:id", getUser);
 router.post("/", limiter, checkRole(["admin"]), createUser);
 router.patch("/:id", limiter, checkRole(["admin"]), updateUser);
-router.delete("/:id", checkRole(["admin"]), deleteUser);
+router.delete("/:id", checkRole(["admin", "hr"]), deleteUser);
 
 router.get("/:id/kandidat", getKandidat);
 router.get("/:id/company", getCompany);
