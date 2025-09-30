@@ -3,11 +3,9 @@ import { Router } from "express";
 import {
   createUser,
   deleteUser,
-  getCommunity,
-  getCompany,
-  getKandidat,
-  getKursus,
   getUser,
+  getUserApplications,
+  getUserEnrollments,
   getUsers,
   updateUser,
 } from "../controllers/userControllers.js";
@@ -48,15 +46,14 @@ const limiter = rateLimit({
 
 const router: Router = express.Router();
 
-router.get("/", getUsers);
-router.get("/:id", getUser);
+router.get("/", checkRole(["admin"]), getUsers);
+router.get("/:id", checkRole(["admin"]), getUser);
 router.post("/", limiter, checkRole(["admin"]), createUser);
 router.patch("/:id", limiter, checkRole(["admin"]), updateUser);
-router.delete("/:id", checkRole(["admin", "hr"]), deleteUser);
+router.delete("/:id", checkRole(["admin"]), deleteUser);
 
-router.get("/:id/kandidat", getKandidat);
-router.get("/:id/company", getCompany);
-router.get("/:id/kursus", getKursus);
-router.get("/:id/community", getCommunity);
+router.get("/:id/applications", checkRole(["admin"]), getUserApplications);
+router.get("/:id/enrollments", checkRole(["admin"]), getUserEnrollments);
+
 
 export default router;

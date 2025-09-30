@@ -12,7 +12,6 @@ export const getUsers = async (req: Request, res: Response) => {
       companyId: true,
     },
   });
-
   return res
     .status(200)
     .json({ status: 200, total: users.length, data: users });
@@ -20,14 +19,19 @@ export const getUsers = async (req: Request, res: Response) => {
 
 export const getUser = async (req: Request, res: Response) => {
   const { id } = req.params;
-
   if (!id) {
     return res.status(400).json({ message: "Parameter ID user dibutuhkan" });
   }
 
   const user = await prisma.user.findUnique({
-    where: {
-      id,
+    where: { id },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      companyId: true,
+      company: true,
     },
   });
 
@@ -36,55 +40,49 @@ export const getUser = async (req: Request, res: Response) => {
       .status(404)
       .json({ message: `User dengan ID ${id} tidak ditemukan.` });
   }
-
   res.status(200).json({ status: 200, data: user });
 };
 
 export const createUser = async (req: Request, res: Response) => {
   const { email, name, password, role, companyId } = req.body;
 
-  const fields: { [key: string]: string } = { email, name, password, role };
-
-  for (let field in fields) {
-    if (!fields[field]) {
-      return res.status(400).json({ message: `${field} is required` });
-    }
+  if (!email || !name || !password) {
+    return res
+      .status(400)
+      .json({ message: `Email, nama, dan password wajib diisi.` });
   }
 
-  const userExist = await prisma.user.findUnique({
-    where: {
-      email,
-    },
-  });
-
-  if (userExist) {
-    return res.status(400).json({ message: "Username already exists." });
-  }
-
-  const hashedPassword = await argon2.hash(password);
   try {
-    const createUser = await prisma.user.create({
-      data: {
-        email,
-        name,
-        password: hashedPassword,
-        role,
-        companyId,
-      },
-    });
+    const userExist = await prisma.user.findUnique({ where: { email } });
+    if (userExist) {
+      return res.status(400).json({ message: "Email sudah terdaftar." });
+    }
 
-    res.status(200).json({
-      status: 200,
-      message: "Create User Successfully",
-      data: createUser,
+    const hashedPassword = await argon2.hash(password);
+
+    const dataToCreate: any = {
+      email,
+      name,
+      password: hashedPassword,
+      role,
+    };
+
+    if (companyId) {
+      dataToCreate.companyId = companyId;
+    }
+
+    const newUser = await prisma.user.create({ data: dataToCreate });
+
+    res.status(201).json({
+      status: 201,
+      message: "Pengguna berhasil dibuat",
+      data: newUser,
     });
   } catch (e) {
     console.log(e);
-    res.status(500).json({
-      status: 500,
-      message: "Terjadi Kesalahan saat Create User",
-      error: e,
-    });
+    res
+      .status(500)
+      .json({ message: "Terjadi kesalahan saat membuat pengguna" });
   }
 };
 
@@ -92,12 +90,7 @@ export const updateUser = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { name, email, password, role, companyId } = req.body;
 
-  if (!id) {
-    return res.status(400).json({ message: "Parameter ID user dibutuhkan" });
-  }
-
   const updateData: { [key: string]: any } = {};
-
   if (name !== undefined) updateData.name = name;
   if (role !== undefined) updateData.role = role;
   if (companyId !== undefined) updateData.companyId = companyId;
@@ -123,7 +116,9 @@ export const updateUser = async (req: Request, res: Response) => {
       .status(400)
       .json({ message: "Tidak ada data yang valid untuk di-update." });
   }
-
+  if (!id) {
+    return res.status(400).json({ message: "Parameter ID user dibutuhkan" });
+  }
   try {
     const updatedUser = await prisma.user.update({
       where: { id },
@@ -140,160 +135,50 @@ export const deleteUser = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   if (!id) {
-    return res.status(400).json({ message: "Parameter ID dibutuhkan" });
-  }
-
-  const user = await prisma.user.findUnique({
-    where: {
-      id,
-    },
-  });
-
-  if (!user) {
-    return res
-      .status(400)
-      .json({ message: `User dengan id ${id} tidak ditemukan` });
-  }
-
-  const deletedUser = await prisma.user.delete({
-    where: {
-      id,
-    },
-  });
-
-  res.status(200).json({
-    status: 200,
-    message: "Berhasil Menghapus user",
-    data: deletedUser,
-  });
-};
-
-export const getCompany = async (req: Request, res: Response) => {
-  const { id } = req.params;
-
-  if (!id) {
-    return res.status(400).json({ message: "parameter ID dibutuhkan" });
+    return res.status(400).json({ message: "Parameter ID user dibutuhkan" });
   }
 
   try {
-    const kandidat = await prisma.user.findUnique({
-      where: {
-        id,
-      },
-      include: {
-        company: true,
-      },
-    });
-
-    if (!kandidat) {
-      return res
-        .status(404)
-        .json({ message: "kandidat tidak ditemukan pada user" });
-    }
-
-    res.status(200).json({ status: 200, data: kandidat });
-  } catch (e) {
-    console.log(e);
+    const deletedUser = await prisma.user.delete({ where: { id } });
     res
-      .status(500)
-      .json({ message: "Terjadi kesalahan pada server", error: e });
+      .status(200)
+      .json({ message: "Pengguna berhasil dihapus", data: deletedUser });
+  } catch (e) {
+    console.error(e);
+    res.status(404).json({ message: `User dengan ID ${id} tidak ditemukan.` });
   }
 };
 
-export const getKandidat = async (req: Request, res: Response) => {
+export const getUserApplications = async (req: Request, res: Response) => {
   const { id } = req.params;
-
   if (!id) {
-    return res.status(400).json({ message: "parameter ID dibutuhkan" });
+    return res.status(400).json({ message: "Parameter ID user dibutuhkan" });
   }
-
   try {
-    const kandidat = await prisma.user.findUnique({
-      where: {
-        id,
-      },
+    const applications = await prisma.kandidat.findMany({
+      where: { userId: id },
       include: {
-        applications: true,
+        job: { select: { title: true, company: { select: { name: true } } } },
       },
     });
-
-    if (!kandidat) {
-      return res
-        .status(404)
-        .json({ message: "kandidat tidak ditemukan pada user" });
-    }
-
-    res.status(200).json({ status: 200, data: kandidat });
+    res.status(200).json({ data: applications });
   } catch (e) {
-    console.log(e);
-    res
-      .status(500)
-      .json({ message: "Terjadi kesalahan pada server", error: e });
+    res.status(500).json({ message: "Gagal mengambil data lamaran" });
   }
 };
 
-export const getKursus = async (req: Request, res: Response) => {
+export const getUserEnrollments = async (req: Request, res: Response) => {
   const { id } = req.params;
-
   if (!id) {
-    return res.status(400).json({ message: "parameter ID dibutuhkan" });
+    return res.status(400).json({ message: "ID dibutuhkan" });
   }
-
   try {
-    const kursus = await prisma.user.findUnique({
-      where: {
-        id,
-      },
-      include: {
-        enrolledCourses: true,
-      },
+    const enrollments = await prisma.enrollment.findMany({
+      where: { userId: id },
+      include: { kursus: { select: { title: true } } },
     });
-
-    if (!kursus) {
-      return res
-        .status(404)
-        .json({ status: 404, message: "kursus tidak ditemukan pada user" });
-    }
-
-    res.status(200).json({ status: 200, data: kursus });
+    res.status(200).json({ data: enrollments });
   } catch (e) {
-    res.status(500).json({
-      status: 500,
-      message: "Terjadi kesalahan pada server",
-      error: e,
-    });
-  }
-};
-
-export const getCommunity = async (req: Request, res: Response) => {
-  const { id } = req.params;
-
-  if (!id) {
-    return res.status(400).json({ message: "parameter ID dibutuhkan" });
-  }
-
-  try {
-    const community = await prisma.user.findUnique({
-      where: {
-        id,
-      },
-      include: {
-        communities: true,
-      },
-    });
-
-    if (!community) {
-      return res
-        .status(404)
-        .json({ status: 404, message: "Community tidak ditemukan pada user" });
-    }
-
-    res.status(200).json({ status: 200, message: community });
-  } catch (e) {
-    res.status(500).json({
-      status: 500,
-      message: "Terjadi kesalahan pada server",
-      error: e,
-    });
+    res.status(500).json({ message: "Gagal mengambil data kursus" });
   }
 };

@@ -36,54 +36,164 @@ enum CandidateStatus {
 }
 
 model User {
-  id  String @id @default(auto()) @map("_id") @db.ObjectId
-  email String @unique
-  name String
-  password String
-  role Role @default(user)
-  companyId String?     @db.ObjectId
-  company   Company?    @relation("CompanyHR", fields: [companyId], references: [id])
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  name      String
+  password  String
+  role      Role     @default(user)
+  companyId String?  @db.ObjectId
+  company   Company? @relation("CompanyHR", fields: [companyId], references: [id])
 
   applications Kandidat[]
-
-  enrolledCourses   Kursus[] @relation("UserCourses", fields: [enrolledCourseIds], references: [id])
-  enrolledCourseIds String[] @db.ObjectId
-
-  communities   Community[] @relation("UserCommunities", fields: [communityIds], references: [id])
-  communityIds  String[]    @db.ObjectId
-  createAt DateTime @default(now())
-  updateAt DateTime @updatedAt
-}
-
-model Kursus {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  description String
-  instructor  String
-  duration Int
-
-  enrolledUsers   User[]   @relation("UserCourses", fields: [enrolledUserIds], references: [id])
-  enrolledUserIds String[] @db.ObjectId
+  enrollments  Enrollment[]
+  certificates Certificate[]
+  threads      ForumThread[]
+  posts        ForumPost[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
+model Category {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String   @unique
+  slug      String   @unique
+  thumbnail String?
+  courses   Kursus[]
+}
+
+model Kursus {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  instructor  String
+
+  thumbnail   String?
+  lessonCount Int
+  rating      Float
+  duration    Int
+
+  categoryId String   @db.ObjectId
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  topics       Topic[]
+  enrollments  Enrollment[]
+  certificates Certificate[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Topic {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  title    String
+  content  String
+  videoUrl String?
+
+  kursusId String @db.ObjectId
+  kursus   Kursus @relation(fields: [kursusId], references: [id], onDelete: Cascade)
+
+  quiz      Quiz?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Quiz {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  title String
+
+  topicId String @unique @db.ObjectId
+  topic   Topic  @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  questions Question[]
+}
+
+model Question {
+  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  text String
+
+  quizId String @db.ObjectId
+  quiz   Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  answers Answer[]
+}
+
+model Answer {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  text      String
+  isCorrect Boolean
+
+  questionId String   @db.ObjectId
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model Enrollment {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  kursusId String @db.ObjectId
+  kursus   Kursus @relation(fields: [kursusId], references: [id], onDelete: Cascade)
+
+  enrolledAt DateTime @default(now())
+  progress   Float    @default(0)
+
+  @@unique([userId, kursusId])
+}
+
+model Certificate {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  kursusId String @db.ObjectId
+  kursus   Kursus @relation(fields: [kursusId], references: [id])
+
+  issuedAt DateTime @default(now())
+
+  @@unique([userId, kursusId])
+}
+
+model ForumThread {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  title   String
+  content String
+
+  authorId String @db.ObjectId
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  posts     ForumPost[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model ForumPost {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  content String
+
+  authorId String @db.ObjectId
+  author   User   @relation(fields: [authorId], references: [id])
+
+  threadId String      @db.ObjectId
+  thread   ForumThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
 model Community {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  name          String   @unique
+  id            String  @id @default(auto()) @map("_id") @db.ObjectId
+  name          String  @unique
   description   String
   coverImageUrl String?
-  members   User[]     @relation("UserCommunities", fields: [memberIds], references: [id])
-  memberIds String[]   @db.ObjectId
+
   createdAt DateTime @default(now())
-  updateAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Company {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  name        String   @unique
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  name        String     @unique
   description String
   website     String?
   location    String
@@ -96,32 +206,32 @@ model Company {
 }
 
 model Lowongan {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  title         String
-  description   String
-  location      String
-  jobType       JobType
-  salaryRange   String?
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  location    String
+  jobType     JobType
+  salaryRange String?
 
-  companyId String   @db.ObjectId
-  company   Company  @relation(fields: [companyId], references: [id])
+  companyId String  @db.ObjectId
+  company   Company @relation(fields: [companyId], references: [id])
 
-  candidates  Kandidat[]
+  candidates Kandidat[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Kandidat {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  status  CandidateStatus @default(Applied)
-  userId String @db.ObjectId
-  user User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  jobId String   @db.ObjectId
-  job Lowongan @relation(fields: [jobId], references: [id])
-  
-  resumeUrl   String
+  id     String          @id @default(auto()) @map("_id") @db.ObjectId
+  status CandidateStatus @default(Applied)
+  userId String          @db.ObjectId
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId  String          @db.ObjectId
+  job    Lowongan        @relation(fields: [jobId], references: [id])
+
+  resumeUrl String
   appliedAt DateTime @default(now())
-  
+
   @@unique([userId, jobId])
 }

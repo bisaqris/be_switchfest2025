@@ -3,13 +3,7 @@ import { prisma } from "../config/prisma.js";
 import cloudinary from "../config/cloudinary.js";
 
 export const getCommunities = async (req: Request, res: Response) => {
-  const communities = await prisma.community.findMany({
-    include: {
-      _count: {
-        select: { members: true },
-      },
-    },
-  });
+  const communities = await prisma.community.findMany();
 
   return res
     .status(200)
@@ -70,9 +64,9 @@ export const createCommunity = async (req: Request, res: Response) => {
 
   let coverImageUrl: string | null = null;
 
-  console.log("BELUM ADA FILENYA")
+  console.log("BELUM ADA FILENYA");
   if (req.file) {
-    console.log("ADA FILENYA")
+    console.log("ADA FILENYA");
     try {
       const fileUri = bufferToDataURI(req.file.buffer, req.file.mimetype);
       const uploadResult = await cloudinary.uploader.upload(fileUri, {
@@ -174,11 +168,13 @@ export const deletecommunity = async (req: Request, res: Response) => {
   try {
     const community = await prisma.community.findUnique({ where: { id } });
     if (!community) {
-      return res.status(404).json({ message: `Komunitas dengan id ${id} tidak ditemukan` });
+      return res
+        .status(404)
+        .json({ message: `Komunitas dengan id ${id} tidak ditemukan` });
     }
 
     if (community.coverImageUrl) {
-      const publicId = community.coverImageUrl.split('/').pop()?.split('.')[0];
+      const publicId = community.coverImageUrl.split("/").pop()?.split(".")[0];
       if (publicId) {
         await cloudinary.uploader.destroy(`community_covers/${publicId}`);
       }
@@ -190,8 +186,8 @@ export const deletecommunity = async (req: Request, res: Response) => {
       message: "Berhasil Menghapus community",
       data: deletedCommunity,
     });
-  } catch(e) {
-      console.error(e);
-      res.status(500).json({ message: "Terjadi kesalahan pada server" });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Terjadi kesalahan pada server" });
   }
 };
