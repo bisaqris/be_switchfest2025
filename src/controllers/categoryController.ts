@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma.js";
 import cloudinary from "../config/cloudinary.js";
+import { slugify } from "../utils/slugify.js";
 
 export const getCategories = async (req: Request, res: Response) => {
   try {
@@ -73,7 +74,7 @@ export const createCategory = async (req: Request, res: Response) => {
   if (!name) {
     return res.status(400).json({ message: "Nama kategori wajib diisi." });
   }
-
+  const slug = slugify(name);
   let thumbnailUrl: string | null = null;
   if (req.file) {
     try {
@@ -91,6 +92,7 @@ export const createCategory = async (req: Request, res: Response) => {
     const newCategory = await prisma.category.create({
       data: {
         name,
+        slug,
         thumbnail: thumbnailUrl,
       },
     });
